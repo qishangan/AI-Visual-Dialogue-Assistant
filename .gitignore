@@ -1,0 +1,16 @@
+node_modules/
+dist/
+
+.env
+!.env.example
+*.local
+
+tsconfig.tsbuildinfo
+.DS_Store
+
+.codegraph/
+.reasonix/
+
+android-redesign/.gradle/
+android-redesign/local.properties
+android-redesign/**/build/
