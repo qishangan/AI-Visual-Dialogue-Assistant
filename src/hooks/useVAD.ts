@@ -1,4 +1,4 @@
-import { useRef, useState, useCallback, useEffect } from 'react';
+import { useRef, useState, useCallback, useEffect, useMemo } from 'react';
 import type { VADStatus } from '../types';
 import ortWasmMjsUrl from 'onnxruntime-web/ort-wasm-simd-threaded.mjs?url';
 import ortWasmUrl from 'onnxruntime-web/ort-wasm-simd-threaded.wasm?url';
@@ -87,5 +87,8 @@ export function useVAD(callbacks: UseVADCallbacks): UseVADResult {
     };
   }, []);
 
-  return { status, initialized, paused, start, pause, resume };
+  return useMemo(
+    () => ({ status, initialized, paused, start, pause, resume }),
+    [status, initialized, paused, start, pause, resume]
+  );
 }

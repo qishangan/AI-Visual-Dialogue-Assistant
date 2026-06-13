@@ -1,16 +1,16 @@
 import { useState, useCallback, useRef } from 'react';
-import { streamChat, buildVLMMessages } from '../services/vlm';
+import { streamAnswer } from '../services/deepseek';
 import { classifyError } from '../utils/errorTypes';
 import type { Message } from '../types';
 
-interface UseVLMResult {
+interface UseDialogueResult {
   streamingText: string;
   isStreaming: boolean;
   error: string | null;
-  /** 发起 VLM 流式请求，返回完整文字 */
+  /** 发起学习助手流式回答，返回完整文字 */
   stream: (params: {
     userText: string;
-    imageBase64?: string;
+    imageDescription?: string;
     history: Message[];
   }) => Promise<string>;
   cancel: () => void;
@@ -20,11 +20,13 @@ const MAX_RETRIES = 2;
 const BASE_DELAY_MS = 1500;
 
 /**
- * 管理通义千问 VL 流式调用。
+ * 管理最终学习助手回答流。
+ * 图片在进入本 Hook 前已经由视觉模型转写成文字，最终回答由 DeepSeek 结合
+ * 用户语音、视觉转写和历史上下文生成。
  * 逐 chunk 追加 streamingText，返回最终完整文字。
  * 对 retryable 错误（限流、服务端错误）自动指数退避重试。
  */
-export function useVLM(): UseVLMResult {
+export function useDialogue(): UseDialogueResult {
   const [streamingText, setStreamingText] = useState('');
   const [isStreaming, setIsStreaming] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -38,11 +40,11 @@ export function useVLM(): UseVLMResult {
   const stream = useCallback(
     async ({
       userText,
-      imageBase64,
+      imageDescription,
       history,
     }: {
       userText: string;
-      imageBase64?: string;
+      imageDescription?: string;
       history: Message[];
     }): Promise<string> => {
       setIsStreaming(true);
@@ -53,10 +55,16 @@ export function useVLM(): UseVLMResult {
       let lastError: string | null = null;
 
       for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
-        try {
-          const vlmMessages = buildVLMMessages(history, userText, imageBase64);
+        const controller = new AbortController();
+        abortRef.current = controller;
 
-          for await (const chunk of streamChat(vlmMessages)) {
+        try {
+          for await (const chunk of streamAnswer(
+            history,
+            userText,
+            imageDescription,
+            controller.signal
+          )) {
             fullText += chunk;
             setStreamingText((prev) => prev + chunk);
           }
@@ -66,7 +74,13 @@ export function useVLM(): UseVLMResult {
           setStreamingText('');
           return fullText;
         } catch (err) {
-          const appErr = classifyError(err, 'vlm');
+          if (err instanceof DOMException && err.name === 'AbortError') {
+            setIsStreaming(false);
+            setStreamingText('');
+            return fullText;
+          }
+
+          const appErr = classifyError(err, 'dialogue');
           lastError = appErr.message;
 
           // 不可重试 or 已达最大次数 → 终止
@@ -80,11 +94,15 @@ export function useVLM(): UseVLMResult {
 
           // 指数退避等待
           const delay = BASE_DELAY_MS * Math.pow(2, attempt);
-          console.warn(`VLM 重试 ${attempt + 1}/${MAX_RETRIES}，${delay}ms 后…`);
+          console.warn(`对话重试 ${attempt + 1}/${MAX_RETRIES}，${delay}ms 后…`);
           await new Promise((r) => setTimeout(r, delay));
           // 重置 fullText，重新开始
           fullText = '';
           setStreamingText('');
+        } finally {
+          if (abortRef.current === controller) {
+            abortRef.current = null;
+          }
         }
       }
 
