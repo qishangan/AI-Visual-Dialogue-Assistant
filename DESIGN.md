@@ -103,4 +103,4 @@ Android 版本使用原生 Camera、TextureView 和 AudioRecord：
 
 - Web：运行 `npm run build` 验证 TypeScript 和 Vite 构建。
 - Android：在 Android Studio 中同步 Gradle 并运行 `app`。
-- 人工演示：使用根目录的 `演示视频.mp4` 展示摄像头、框选、语音提问、AI 流式回答和 TTS 播放流程。
+- 人工演示：通过 README 中的 B 站 demo 链接展示摄像头、框选、语音提问、AI 流式回答和 TTS 播放流程。

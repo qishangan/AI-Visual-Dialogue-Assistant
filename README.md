@@ -1,45 +1,79 @@
-# AI Visual Dialogue Assistant
-
 <p align="center">
-  <img src="./项目图标.png" width="128" alt="AI Visual Dialogue Assistant 项目图标" />
+  <img src="./项目图标（透明）.png" width="128" alt="AI Visual Dialogue Assistant Logo" />
 </p>
 
-一款面向学习场景的 AI 视觉对话助手。应用会打开摄像头和麦克风，在用户说话时自动截取当前画面，结合语音识别、视觉理解、流式对话和语音播报，像学习伙伴一样引导学生理解题目。
+<h1 align="center">AI Visual Dialogue Assistant</h1>
 
-项目重点不是把整张视频画面持续上传给模型，而是让用户先框选题目或答题区域，再只上传关键区域截图。这样能减少无关背景干扰，也能降低视觉 token 与接口调用成本。
+<p align="center">
+  面向 K12 学习场景的 AI 视觉对话助手：看题、听题、引导学生自己想明白。
+</p>
 
-## 演示
+<p align="center">
+  <a href="./LICENSE"><img alt="License" src="https://img.shields.io/badge/license-MIT-green" /></a>
+  <img alt="React" src="https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=111" />
+  <img alt="TypeScript" src="https://img.shields.io/badge/TypeScript-6-3178C6?logo=typescript&logoColor=fff" />
+  <img alt="Vite" src="https://img.shields.io/badge/Vite-8-646CFF?logo=vite&logoColor=fff" />
+  <img alt="Android" src="https://img.shields.io/badge/Android-native-3DDC84?logo=android&logoColor=111" />
+</p>
 
-[![演示视频封面](./项目图标.png)](./演示视频.mp4)
+## Demo
 
-点击上方图片或打开 [演示视频.mp4](./演示视频.mp4) 查看完整 demo。
+[七上安刚刚发布的视频 https://b23.tv/h2JMfAr](https://b23.tv/h2JMfAr)
 
-## 核心功能
+## Overview
 
-- 摄像头实时预览，支持鼠标或触摸拖拽框选题目区域。
-- 麦克风语音交互，使用端侧 VAD 自动判断说话开始和结束。
-- ASR 将用户语音转成文本，DashScope 先做图片客观转写，再由 DeepSeek 结合上下文生成学习引导。
-- AI 回复采用流式输出，TTS 按句合成并自动播放，减少等待感。
-- 学习助手式 System Prompt：优先提问和提示，不直接给最终答案。
-- 对话历史自动压缩，保留上下文的同时控制提示词长度。
-- AI 语音支持开关和重播，支持清空对话和状态提示。
-- 仓库包含 Web 版本和原生 Android 重设计版本。
+AI Visual Dialogue Assistant 是一个企业命题实践项目，目标是开发一款能打开摄像头与麦克风、理解画面和语音并自然回复的 AI 对话应用。
 
-## 技术栈
+项目当前聚焦“学习助手”场景：学生把题目放在摄像头前，用语音提问。应用会在语音开始时截取当前画面，支持用户框选题目区域，只把关键区域交给视觉模型，减少无关背景干扰和视觉 token 成本。AI 的回答不直接给最终答案，而是通过提问、提示和追问引导学生理解题目。
 
-- Web：React 19、TypeScript、Vite。
-- 端侧语音检测：`@ricky0123/vad-web`、`onnxruntime-web`。
-- 图像处理：Canvas 裁剪、JPEG 压缩、`browser-image-compression`。
-- 云端模型：DashScope `qwen3-asr-flash`、`qwen-vl-plus`、`qwen3-tts-flash`，DeepSeek `deepseek-v4-flash`。
-- Android：Java、Camera/TextureView、AudioRecord VAD、DashScope、DeepSeek。
+## Highlights
 
-## 第三方依赖与原创实现说明
+- **视觉 + 语音一体化交互**：摄像头实时预览、麦克风监听、ASR、视觉转写、流式回答和 TTS 播放串成完整链路。
+- **题目区域框选**：支持鼠标/触摸拖拽框选题目或答题区域，避免上传整张画面。
+- **视觉转写与回答解耦**：DashScope 负责图片客观转写，DeepSeek 结合语音文本、图片转写和上下文生成最终学习引导。
+- **端侧 VAD**：在浏览器/Android 端判断语音开始和结束，减少静音上传和无效调用。
+- **流式体验**：AI 回复实时显示，TTS 按句合成播放，降低等待感。
+- **学习助手 Prompt**：默认不直接给答案，每轮只给一步提示，鼓励学生自己思考。
+- **成本控制策略**：单帧截图、区域裁剪、图片压缩、历史摘要、音频缓存重播和 API Key 本地代理。
+- **Web + Android 双端实现**：Web 端用于快速验证交互，Android 端提供原生移动端体验。
 
-本项目使用了 React、Vite、TypeScript、`@ricky0123/vad-web`、`onnxruntime-web`、`browser-image-compression` 和 Android Gradle Plugin 等第三方库或框架。云端模型能力来自 DashScope 与 DeepSeek API。
+## Architecture
 
-原创实现部分主要包括：学习助手式对话流程设计、摄像头区域框选交互、Web 端 `object-fit: cover` 坐标映射裁剪、按语音起点截取画面、视觉转写与最终回答分层、对话历史规则压缩、流式回复驱动的分句 TTS 播放、AI 朗读期间暂停麦克风监听，以及原生 Android 版本的 Camera/AudioRecord/SelectionOverlay 集成。
+```text
+Camera preview / region selection
+        |
+        v
+Speech start detected by VAD -----> Capture selected image region
+        |                                      |
+        v                                      v
+Speech end audio segment              DashScope image transcription
+        |                                      |
+        v                                      |
+DashScope ASR -------------------------+
+        |
+        v
+DeepSeek streaming learning response
+        |
+        v
+Sentence-level DashScope TTS playback
+```
 
-## 快速运行 Web 版本
+## Tech Stack
+
+| Area | Implementation |
+| --- | --- |
+| Web frontend | React 19, TypeScript, Vite |
+| Web VAD | `@ricky0123/vad-web`, `onnxruntime-web` |
+| Image processing | Canvas crop, JPEG compression, `browser-image-compression` |
+| ASR | DashScope `qwen3-asr-flash` |
+| Vision transcription | DashScope `qwen-vl-plus` |
+| Dialogue generation | DeepSeek `deepseek-v4-flash` |
+| TTS | DashScope `qwen3-tts-flash` |
+| Android | Java, Camera/TextureView, AudioRecord, native UI |
+
+## Quick Start
+
+### Web
 
 ```bash
 npm install
@@ -47,42 +81,69 @@ copy .env.example .env
 npm run dev
 ```
 
-然后在 `.env` 中填入：
+Fill `.env`:
 
 ```env
 DASHSCOPE_API_KEY=sk-your-key-here
 DEEPSEEK_API_KEY=sk-your-key-here
 ```
 
-浏览器打开 Vite 输出的本地地址，并允许摄像头与麦克风权限。Web 版本通过 Vite 本地代理调用 DashScope 和 DeepSeek，API Key 不会暴露给浏览器前端代码；如果要部署到公网，需要额外准备后端代理。
+Open the Vite local URL and allow camera/microphone permissions. The Web app uses the Vite proxy to call DashScope and DeepSeek, so API keys are not exposed to browser code. A production deployment should replace this with a real backend proxy.
 
-## 运行 Android 版本
+### Android
 
-Android 版本位于 [android-redesign](./android-redesign)。用 Android Studio 打开该目录，在 `local.properties` 中配置：
+Open [android-redesign](./android-redesign) in Android Studio, then configure `local.properties`:
 
 ```properties
 DASHSCOPE_API_KEY=sk-your-key-here
 DEEPSEEK_API_KEY=sk-your-key-here
 ```
 
-同步 Gradle 后运行 `app` 配置即可。
+Sync Gradle and run the `app` configuration on a device or emulator.
 
-## 项目结构
+## Repository Structure
 
 ```text
 .
-├── src/                    # Web 应用源码
-│   ├── components/          # 摄像头、对话气泡、状态栏等 UI
-│   ├── hooks/               # Camera、VAD、ASR、VLM、TTS、Chat 状态
-│   ├── services/            # ASR/VLM/TTS 请求与图片处理
-│   └── utils/               # 意图分类、摘要压缩、错误处理
-├── public/                  # VAD/ONNX 运行时资源
-├── android-redesign/        # 原生 Android 版本
-├── DESIGN.md                # 设计文档
-├── 项目图标.png
-└── 演示视频.mp4
+├── src/                    # Web app source
+│   ├── components/          # Camera, chat bubbles, status bar, toast
+│   ├── hooks/               # Camera, VAD, ASR, dialogue, TTS, chat state
+│   ├── services/            # ASR, vision, DeepSeek, TTS, image processing
+│   └── utils/               # Constants, summary, audio, error handling
+├── public/                  # VAD / ONNX runtime assets
+├── android-redesign/        # Native Android implementation
+├── DESIGN.md                # Design document required by the task
+├── 项目图标（透明）.png
+└── README.md
 ```
 
-## 设计文档
+## Design Document
 
-完整设计说明、用户故事完成情况和运营成本控制策略见 [DESIGN.md](./DESIGN.md)。
+The design document covers:
+
+- planned and completed user stories
+- visual understanding and speech interaction design
+- cloud/edge cost-control strategies
+- known limitations and follow-up improvements
+
+See [DESIGN.md](./DESIGN.md).
+
+## Third-party Dependencies and Original Work
+
+This project uses React, Vite, TypeScript, `@ricky0123/vad-web`, `onnxruntime-web`, `browser-image-compression`, Android Gradle Plugin, DashScope APIs and DeepSeek APIs.
+
+Original implementation work includes:
+
+- learning-assistant interaction flow and prompt design
+- camera region selection UX
+- Web `object-fit: cover` coordinate mapping for accurate crop
+- speech-start snapshot timing
+- image transcription + dialogue generation separation
+- rule-based chat history compression
+- streaming text-to-speech playback by sentence
+- microphone pause/resume while AI audio is playing
+- native Android Camera / AudioRecord / SelectionOverlay integration
+
+## Submission Notes
+
+This repository follows a PR-based delivery flow. Features are split into small branches and pull requests so reviewers can inspect the development process, implementation scope and validation method step by step.
