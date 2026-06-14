@@ -18,7 +18,7 @@
 
 - 摄像头实时预览，支持鼠标或触摸拖拽框选题目区域。
 - 麦克风语音交互，使用端侧 VAD 自动判断说话开始和结束。
-- ASR 将用户语音转成文本，再由视觉/语言模型结合截图理解题目。
+- ASR 将用户语音转成文本，DashScope 先做图片客观转写，再由 DeepSeek 结合上下文生成学习引导。
 - AI 回复采用流式输出，TTS 按句合成并自动播放，减少等待感。
 - 学习助手式 System Prompt：优先提问和提示，不直接给最终答案。
 - 对话历史自动压缩，保留上下文的同时控制提示词长度。
@@ -30,14 +30,14 @@
 - Web：React 19、TypeScript、Vite。
 - 端侧语音检测：`@ricky0123/vad-web`、`onnxruntime-web`。
 - 图像处理：Canvas 裁剪、JPEG 压缩、`browser-image-compression`。
-- 云端模型：DashScope `qwen3-asr-flash`、`qwen-vl-plus`、`qwen3-tts-flash`。
+- 云端模型：DashScope `qwen3-asr-flash`、`qwen-vl-plus`、`qwen3-tts-flash`，DeepSeek `deepseek-v4-flash`。
 - Android：Java、Camera/TextureView、AudioRecord VAD、DashScope、DeepSeek。
 
 ## 第三方依赖与原创实现说明
 
 本项目使用了 React、Vite、TypeScript、`@ricky0123/vad-web`、`onnxruntime-web`、`browser-image-compression` 和 Android Gradle Plugin 等第三方库或框架。云端模型能力来自 DashScope 与 DeepSeek API。
 
-原创实现部分主要包括：学习助手式对话流程设计、摄像头区域框选交互、Web 端 `object-fit: cover` 坐标映射裁剪、按语音起点截取画面、关键词式视觉意图判断、对话历史规则压缩、流式回复驱动的分句 TTS 播放、AI 朗读期间暂停麦克风监听，以及原生 Android 版本的 Camera/AudioRecord/SelectionOverlay 集成。
+原创实现部分主要包括：学习助手式对话流程设计、摄像头区域框选交互、Web 端 `object-fit: cover` 坐标映射裁剪、按语音起点截取画面、视觉转写与最终回答分层、对话历史规则压缩、流式回复驱动的分句 TTS 播放、AI 朗读期间暂停麦克风监听，以及原生 Android 版本的 Camera/AudioRecord/SelectionOverlay 集成。
 
 ## 快速运行 Web 版本
 
@@ -51,9 +51,10 @@ npm run dev
 
 ```env
 DASHSCOPE_API_KEY=sk-your-key-here
+DEEPSEEK_API_KEY=sk-your-key-here
 ```
 
-浏览器打开 Vite 输出的本地地址，并允许摄像头与麦克风权限。Web 版本通过 Vite 本地代理调用 DashScope，API Key 不会暴露给浏览器前端代码；如果要部署到公网，需要额外准备后端代理。
+浏览器打开 Vite 输出的本地地址，并允许摄像头与麦克风权限。Web 版本通过 Vite 本地代理调用 DashScope 和 DeepSeek，API Key 不会暴露给浏览器前端代码；如果要部署到公网，需要额外准备后端代理。
 
 ## 运行 Android 版本
 

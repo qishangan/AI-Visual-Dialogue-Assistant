@@ -30,6 +30,13 @@ export default defineConfig(({ mode }) => {
     process.env.VITE_DASHSCOPE_API_KEY ||
     process.env.DASHSCOPE_API_KEY ||
     '';
+  const deepseekApiKey =
+    envVars.VITE_DEEPSEEK_API_KEY ||
+    envVars.DEEPSEEK_API_KEY ||
+    process.env.VITE_DEEPSEEK_API_KEY ||
+    process.env.DEEPSEEK_API_KEY ||
+    '';
+
   const createDashscopeProxy = (rewritePath: string): ProxyOptions => ({
     target: 'https://dashscope.aliyuncs.com',
     changeOrigin: true,
@@ -44,7 +51,22 @@ export default defineConfig(({ mode }) => {
       });
     },
   });
-  const dashscopeProxy = {
+  const deepseekProxy: ProxyOptions = {
+    target: 'https://api.deepseek.com',
+    changeOrigin: true,
+    secure: true,
+    rewrite: () => '/chat/completions',
+    configure: (proxy) => {
+      proxy.on('proxyReq', (proxyReq) => {
+        if (deepseekApiKey) {
+          proxyReq.setHeader('Authorization', `Bearer ${deepseekApiKey}`);
+        }
+        proxyReq.removeHeader('origin');
+      });
+    },
+  };
+
+  const apiProxy = {
     '/api/asr/chat/completions': createDashscopeProxy(
       '/compatible-mode/v1/chat/completions'
     ),
@@ -54,17 +76,18 @@ export default defineConfig(({ mode }) => {
     '/api/tts/synthesize': createDashscopeProxy(
       '/api/v1/services/aigc/multimodal-generation/generation'
     ),
+    '/api/deepseek/chat/completions': deepseekProxy,
   };
 
   return {
     plugins: [react()],
     server: {
       host: true,
-      proxy: dashscopeProxy,
+      proxy: apiProxy,
     },
     preview: {
       host: true,
-      proxy: dashscopeProxy,
+      proxy: apiProxy,
     },
     optimizeDeps: {
       include: ['@ricky0123/vad-web', 'onnxruntime-web', 'onnxruntime-web/wasm'],

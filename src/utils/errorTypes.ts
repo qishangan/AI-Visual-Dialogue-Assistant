@@ -14,7 +14,7 @@ export interface AppError {
 /** 从原始 Error 或 HTTP 响应中分类应用错误 */
 export function classifyError(
   err: unknown,
-  context: 'asr' | 'vlm' | 'tts'
+  context: 'asr' | 'vision' | 'dialogue' | 'tts'
 ): AppError {
   // 网络中断
   if (err instanceof TypeError && err.message.includes('fetch')) {

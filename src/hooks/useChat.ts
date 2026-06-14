@@ -9,7 +9,7 @@ interface UseChatResult {
   messages: Message[];
   status: AppStatus;
   setStatus: (s: AppStatus) => void;
-  addUserMessage: (text: string, imageBase64?: string) => Message;
+  addUserMessage: (text: string, imageBase64?: string, visualDescription?: string) => Message;
   updateLastAssistantMessage: (text: string) => void;
   /** 将音频缓存挂到最近一条 assistant 消息上 */
   attachAudioToLastAssistant: (chunks: ArrayBuffer[]) => void;
@@ -26,12 +26,13 @@ export function useChat(): UseChatResult {
   const [status, setStatus] = useState<AppStatus>('idle');
 
   const addUserMessage = useCallback(
-    (text: string, imageBase64?: string): Message => {
+    (text: string, imageBase64?: string, visualDescription?: string): Message => {
       const msg: Message = {
         id: `msg-${nextId++}`,
         role: 'user',
         text,
         imageBase64,
+        visualDescription,
         timestamp: Date.now(),
       };
 
