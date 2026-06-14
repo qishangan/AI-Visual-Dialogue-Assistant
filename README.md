@@ -122,7 +122,3 @@ DEEPSEEK_API_KEY=sk-your-key-here
 - 按句流式 TTS 播放
 - AI 朗读时暂停麦克风监听，降低回声误触发
 - 原生 Android Camera / AudioRecord / SelectionOverlay 集成
-
-## 提交说明
-
-本仓库采用 PR 分步提交。功能被拆成多个小分支和 Pull Request，便于评审查看开发过程、实现范围和验证方式。
