@@ -1,0 +1,51 @@
+plugins {
+    id "com.android.application"
+}
+
+def localProperties = new Properties()
+def localPropertiesFile = rootProject.file("local.properties")
+if (localPropertiesFile.exists()) {
+    localPropertiesFile.withInputStream { stream ->
+        localProperties.load(stream)
+    }
+}
+
+def dashscopeApiKey = localProperties.getProperty("DASHSCOPE_API_KEY", "")
+def escapedDashscopeApiKey = dashscopeApiKey
+        .replace("\\", "\\\\")
+        .replace("\"", "\\\"")
+def deepseekApiKey = localProperties.getProperty("DEEPSEEK_API_KEY", "")
+def escapedDeepseekApiKey = deepseekApiKey
+        .replace("\\", "\\\\")
+        .replace("\"", "\\\"")
+
+android {
+    namespace "com.deepseek.aivisualdialogue"
+    compileSdk 36
+
+    defaultConfig {
+        applicationId "com.deepseek.aivisualdialogue"
+        minSdk 26
+        targetSdk 36
+        versionCode 1
+        versionName "1.0"
+        buildConfigField "String", "DASHSCOPE_API_KEY", "\"${escapedDashscopeApiKey}\""
+        buildConfigField "String", "DEEPSEEK_API_KEY", "\"${escapedDeepseekApiKey}\""
+    }
+
+    buildFeatures {
+        buildConfig true
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro"
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}
